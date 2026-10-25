@@ -10,6 +10,7 @@ class Almacen {
     private readonly INotificador notificador;
 
     public Almacen(INotificador notificador) {
+        ArgumentNullException.ThrowIfNull(notificador);
         this.notificador = notificador;
     }
 
@@ -22,6 +23,14 @@ class Almacen {
     }
 
     public void AgregarProducto(Producto producto) {
+        ArgumentNullException.ThrowIfNull(producto);
+        if (string.IsNullOrWhiteSpace(producto.Codigo))
+            throw new ArgumentException("El codigo del producto es obligatorio.", nameof(producto));
+        if (producto.Cantidad < 0)
+            throw new ArgumentException("La cantidad no puede ser negativa.", nameof(producto));
+        if (productos.Any(p => string.Equals(p.Codigo, producto.Codigo, StringComparison.OrdinalIgnoreCase)))
+            throw new ArgumentException($"Ya existe un producto con el codigo {producto.Codigo}.", nameof(producto));
+
         productos.Add(producto);
         notificadoresProducto[producto] = new Notificador();
         Emitir(producto, new Notificacion(
@@ -46,7 +55,11 @@ class Almacen {
         Producto producto = productos[indice];
         if (nombre != null) producto.Nombre = nombre;
         if (precio != null) producto.Precio = precio.Value;
-        if (cantidad != null) producto.Cantidad = cantidad.Value;
+        if (cantidad != null) {
+            if (cantidad.Value < 0)
+                throw new ArgumentException("La cantidad no puede ser negativa.", nameof(cantidad));
+            producto.Cantidad = cantidad.Value;
+        }
         Emitir(producto, new Notificacion(
             TipoEvento.ProductoModificado,
             $"Se modifico {producto.Nombre}", producto));
@@ -83,7 +96,7 @@ class Almacen {
         }
         for (int i = 0; i < productos.Count; i++) {
             int suscriptores = notificadoresProducto[productos[i]].Observadores.Count;
-            Console.WriteLine($"{i}. {productos[i].Nombre} - ${productos[i].Precio} - cant: {productos[i].Cantidad} - suscriptores: {suscriptores}");
+            Console.WriteLine($"{i + 1}. {productos[i].Nombre} - ${productos[i].Precio} - cant: {productos[i].Cantidad} - suscriptores: {suscriptores}");
         }
     }
 }
