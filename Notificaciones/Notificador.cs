@@ -14,6 +14,7 @@ class Notificador : INotificador {
     }
 
     public void Desuscribir(IObservador observador) {
+        ArgumentNullException.ThrowIfNull(observador);
         observadores.Remove(observador);
     }
 
